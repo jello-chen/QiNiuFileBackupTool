@@ -11,16 +11,36 @@ namespace QiNiuFileBackupTool
     {
         private static readonly string qrsctl = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Tools\\qrsctl-v3.2.20170501.exe");
         private static readonly Regex bucketRegex = new Regex("\\[(.*)\\]");
+        private static string username = null;
+        private static string password = null;
+        private static string imagePath = string.Empty;
 
         static void Main(string[] args)
         {
             Console.Title = "QiNiu File Backup Tool";
             ConsoleColor consoleColor = Console.ForegroundColor;
 
-            Console.WriteLine("Please input your qiniu username:");
-            var username = Console.ReadLine();
-            Console.WriteLine("Please input your qiniu password:");
-            var password = Console.ReadLine();
+            if (args.Length < 2)
+            {
+                Console.WriteLine("Please input your qiniu username:");
+                username = Console.ReadLine();
+                Console.WriteLine("Please input your qiniu password:");
+                password = Console.ReadLine();
+
+                if(args.Length == 1)
+                {
+                    imagePath = args[0];
+                }
+            }
+            else
+            {
+                username = args[0];
+                password = args[1];
+                if (args.Length > 2)
+                {
+                    imagePath = args[2];
+                }
+            }
 
             // login
             var loginOutput = CmdUtil.Execute(qrsctl, $"login {username} {password}");
@@ -52,7 +72,7 @@ namespace QiNiuFileBackupTool
             for (int i = 0; i < buckets.Length; i++)
             {
                 var bucket = buckets[i];
-                var bucketDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, bucket);
+                var bucketDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, imagePath, bucket);
                 if (!Directory.Exists(bucketDir))
                     Directory.CreateDirectory(bucketDir);
 
@@ -73,6 +93,11 @@ namespace QiNiuFileBackupTool
                         {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.WriteLine($"Download {markerDir} failed:{downloadOutput}");
+                        }
+                        else
+                        {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine($"Download finished, bucket:{bucket}, marker:{marker}, target:{markerDir}");
                         }
                     });
                 }
